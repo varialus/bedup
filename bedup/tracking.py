@@ -568,9 +568,12 @@ def dedup_tracked1(ds, comm1):
                     ds.tt.notify('File %r is in use, skipping' % fd_names[fd])
                     ds.skip(inode)
                     continue
-                hasher = hashlib.sha1()
-                for buf in iter(lambda: afile.read(BUFSIZE), b''):
-                    hasher.update(buf)
+                if False:
+                    hasher = hashlib.sha1()
+                    for buf in iter(lambda: afile.read(BUFSIZE), b''):
+                        hasher.update(buf)
+                else:
+                    afile.seek(0, os.SEEK_END)
 
                 # Gets rid of a race condition
                 st = os.fstat(fd)
@@ -591,7 +594,10 @@ def dedup_tracked1(ds, comm1):
                         ds.skip(inode)
                     continue
 
-                by_hash[hasher.digest()].append(afile)
+                if False:
+                    by_hash[hasher.digest()].append(afile)
+                else:
+                    by_hash[None].append(afile)
                 ds.tt.update(fhash=None)
 
             for fileset in by_hash.itervalues():
