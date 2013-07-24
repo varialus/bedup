@@ -638,12 +638,22 @@ def clone_data(dest, src, check_first):
 # let's not make that part of the abi though
 # 1M should be safe
 MAX_DEDUP_LEN = 1 * 2**20
+MAX_DEDUP_DESTS = ((4096 - ffi.sizeof('struct btrfs_ioctl_same_args'))
+    // ffi.sizeof('struct btrfs_ioctl_same_extent_info'))
+
 
 def ranges_same(length, src, dests):
     dest_count = len(dests)
     assert dest_count
     assert length > 0
+    return sum((
+        _ranges_same(
+            length, src, dests[i*MAX_DEDUP_DESTS:(i+1)*MAX_DEDUP_DESTS])
+        for i in xrange((dest_count - 1) // MAX_DEDUP_DESTS + 1)), [])
 
+
+def _ranges_same(length, src, dests):
+    dest_count = len(dests)
     statuses = [set() for i in xrange(dest_count)]
     dedup_lens = [0 for i in xrange(dest_count)]
 
@@ -653,6 +663,9 @@ def ranges_same(length, src, dests):
 
     if alloc_size == 1024:
         alloc_size += 1
+
+    if alloc_size > 4096:
+        raise ValueError('Argument larger than 4k, the kernel won\'t handle it')
 
     # keep a reference around; the cast struct won't have ownership
     args_cbuf = ffi.new('char[]', alloc_size)
