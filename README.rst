@@ -41,6 +41,7 @@ pull the rest of our Python dependencies:
 ::
 
     python setup.py install --user
+    mkdir -p ~/bin
     cp -lt ~/bin ~/.local/bin/bedup
 
 Option 2: from a PyPI release
